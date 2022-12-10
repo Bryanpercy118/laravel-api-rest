@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\Account;
 use Illuminate\Http\Request;
 
+use Illuminate\Support\Facades\DB;
 class EventController extends Controller
 {
     //
@@ -18,6 +19,12 @@ class EventController extends Controller
         }elseif($request->input('type') === 'withdraw'){
             return $this->withdraw(
                 $request->input('origin'),
+                $request->input('amount')
+            );
+        }elseif($request->input('type') === 'transfer'){
+            return $this->transfer(
+                $request->input('origin'),
+                $request->input('destination'),
                 $request->input('amount')
             );
         }
@@ -49,5 +56,32 @@ class EventController extends Controller
                 'balance' => $account->balance
             ]
         ], status:201);
+    }
+
+    private function transfer($origin,$destination,$amount,){
+
+        $accountOrigin= Account::findOrfail($origin);
+        $accountDestination= Account::firstOrCreate([
+            'id'=>$destination]);
+
+       DB::transaction(function () use($accountOrigin,$accountDestination,$amount) {
+
+        $accountOrigin->balance -= $amount;
+        $accountDestination->balance += $amount;
+
+        $accountOrigin ->save();
+        $accountDestination->save();
+       });
+       return response()->json([
+        'origin' => [
+            'origin' => $accountOrigin->id,
+            'balance' => $accountOrigin->balance
+        ],
+        'destination' => [
+            'origin' => $accountDestination->id,
+            'balance' => $accountDestination->balance
+        ]
+    ], status:201);
+
     }
 }
