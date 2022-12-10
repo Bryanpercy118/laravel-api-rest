@@ -19,6 +19,3 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-
-Route::resource('/balance' , BalanceController::class);
-
